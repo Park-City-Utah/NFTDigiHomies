@@ -1,5 +1,7 @@
 from PIL import Image
 import numpy as np
+import os as os
+import json as json
 
 
 def generateRandomNumber(lowIn, highIn):
@@ -14,102 +16,106 @@ def generateHomie(total):
         print("Iteration: " + str(i))
 
         # REQUIRED
-        # generate random from 1-6
-        base = generateRandomNumber(1, 5)
-
-        # generate random from 1-5
+        body = generateRandomNumber(1, 6)
         eyes = generateRandomNumber(1, 5)
-
-        # generate random from 1-7
         mouth = generateRandomNumber(1, 7)
-
-        # OPTIONAL
-        # generate random from 1-7, (include 0)
+        # OPTIONAL - higher range equals increase randomness, less likely to align with exisiting feature
         hair = generateRandomNumber(0, 7)
-
-        # generate random from 1-6, (include 0)
+        print(str(hair))
         facialHair = generateRandomNumber(0, 10)
-
-        # generate random from 1-5, (include 0)
         jewelry = generateRandomNumber(0, 8)
-
-        # generate random from 1-4, (include 0) make rare
         smoke = generateRandomNumber(0, 10)
-
-        # generate random from 1-5, (include 0)
         hat = generateRandomNumber(0, 25)
-
-        # generate random from 1-7, (include 0)
         glasses = generateRandomNumber(0, 15)
+        mask = generateRandomNumber(0, 35)
+        special = generateRandomNumber(0, 750)
 
-        # generate random from 1-3, (include 0) make rare
-        mask = generateRandomNumber(0, 50)
-
-        # generate random from 1-3, (include 0) make rare
-        special = generateRandomNumber(0, 1000)
-
-        # Open & paste to base if not 0
-        base = Image.open("Base/" + str(base) + ".png")
-        # base.show()
-
+        # Open Required pngs
+        img0 = Image.open("Body/" + str(body) + ".png")
         img1 = Image.open("Eyes/" + str(eyes) + ".png")
-        base.paste(img1, (0, 0), img1)
-        # base.show()
-
         img2 = Image.open("Mouth/" + str(mouth) + ".png")
-        base.paste(img2, (0, 0), img2)
-        # base.show()
 
+        # Pase Required PNGs
+        img0.paste(img1, (0, 0), img1)
+        img0.paste(img2, (0, 0), img2)
+
+        # Open AND Paste Optional PNGs
         if(0 < hair <= 7):
             img3 = Image.open("Hair/" + str(hair) + ".png")
-            base.paste(img3, (0, 0), img3)
-            # base.show()
+            img0.paste(img3, (0, 0), img3)
 
             if(0 < facialHair <= 7):
                 img4 = Image.open("FacialHair/" + str(facialHair) + ".png")
-                base.paste(img4, (0, 0), img4)
-                # base.show()
-
+                img0.paste(img4, (0, 0), img4)
+            else:
+                facialHair = 0
             if(0 < jewelry <= 5):
                 img5 = Image.open("Jewelry/" + str(jewelry) + ".png")
-                base.paste(img5, (0, 0), img5)
-                # base.show()
-
-        # If no mask
-            if(mask > 5):
-                if(0 < smoke <= 4):
-                    img6 = Image.open("Smoke/" + str(smoke) + ".png")
-                    base.paste(img6, (0, 0), img6)
-                    # base.show()
-                if(0 < hat <= 4):
-                    img7 = Image.open("Hat/" + str(hat) + ".png")
-                    base.paste(img7, (0, 0), img7)
-                # base.show()
-                if(0 < glasses <= 7):
-                    img8 = Image.open("Glasses/" + str(glasses) + ".png")
-                    base.paste(img8, (0, 0), img8)
-                    # base.show()
+                img0.paste(img5, (0, 0), img5)
+            else:
+                jewelry = 0
 
             if(0 < mask <= 5):
                 img9 = Image.open("Mask/" + str(mask) + ".png")
-                base.paste(img9, (0, 0), img9)
-                # base.show()
+                img0.paste(img9, (0, 0), img9)
+            else:
+                if(0 < smoke <= 3):
+                    img6 = Image.open("Smoke/" + str(smoke) + ".png")
+                    img0.paste(img6, (0, 0), img6)
+                else:
+                    smoke = 0
+                if(0 < hat <= 4):
+                    img7 = Image.open("Hat/" + str(hat) + ".png")
+                    img0.paste(img7, (0, 0), img7)
+                else:
+                    hat = 0
+                if(0 < glasses <= 7):
+                    img8 = Image.open("Glasses/" + str(glasses) + ".png")
+                    img0.paste(img8, (0, 0), img8)
+                else:
+                    glasses = 0
+                mask = 0
 
             if(0 < special <= 3):
                 img10 = Image.open("Special/" + str(special) + ".png")
-                base.paste(img10, (0, 0), img10)
-                # base.show()
-                if(0 < smoke <= 4):
+                img0.paste(img10, (0, 0), img10)
+                if(0 < smoke <= 3):
                     img6 = Image.open("Smoke/" + str(smoke) + ".png")
-                    base.paste(img6, (0, 0), img6)
-                    # base.show()
+                    img0.paste(img6, (0, 0), img6)
+                else:
+                    smoke = 0
                 if(0 < jewelry <= 5):
                     img5 = Image.open("Jewelry/" + str(jewelry) + ".png")
-                    base.paste(img5, (0, 0), img5)
-                # base.show()
+                    img0.paste(img5, (0, 0), img5)
+            else:
+                special = 0
+        else:
+            hair = 0
 
-            # base.show()
-            # Generate Image
-            base.save("Homies/" + str(i) + '.png', "PNG")
+        attributes = {
+            'body': body,
+            'eyes': eyes,
+            'mouth': mouth,
+            'hair': hair,
+            'facialHair': facialHair,
+            'jewelry': jewelry,
+            'smoke': smoke,
+            'hat': hat,
+            'glasses': glasses,
+            'mask': mask,
+            'special': special,
+        }
+        homieAttrString = str(attributes)
+        # print(homieAttrString)
+        # print(json.dumps(homieAttrString))
+
+        # Generate Image
+        img0.show()
+        folder = "Homies/" + str(i) + "/"
+        if not os.path.isdir(folder):
+            os.mkdir(folder)
+        img0.save(folder + str(i) + '.png', "PNG")
+        with open(folder + 'data.json', 'w') as f:
+            json.dump(homieAttrString, f)
 
         i = i+1
