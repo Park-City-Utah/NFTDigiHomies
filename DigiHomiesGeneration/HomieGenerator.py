@@ -11,7 +11,7 @@ def generateRandomNumber(lowIn, highIn):
 def generateHomie(total):
     i = 1
     while i <= total:
-        # print("Iteration" + str(iteration))
+        print("Iteration: " + str(i))
 
         # REQUIRED
         # generate random from 1-6
