@@ -113,8 +113,3 @@ def generateHomie(total):
             base.save("Homies/" + str(i) + '.png', "PNG")
 
         i = i+1
-
-# Todo
-    # Generate folder for meta + image?
-    # Generate MetatData to json file
-    # Traits from items above??
