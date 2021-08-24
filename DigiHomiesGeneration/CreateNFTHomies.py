@@ -1,3 +1,3 @@
 from HomieGenerator import generateHomie
 
-generateHomie(100)
+generateHomie(5000)

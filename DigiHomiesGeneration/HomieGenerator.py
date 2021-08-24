@@ -7,7 +7,7 @@ import json as json
 def generateRandomNumber(lowIn, highIn):
     rng = np.random.default_rng()
     ranNumberArray = rng.integers(low=lowIn, high=highIn, size=1)
-    return ranNumberArray[0]
+    return int(ranNumberArray[0])
 
 
 def generateHomie(total):
@@ -21,7 +21,6 @@ def generateHomie(total):
         mouth = generateRandomNumber(1, 7)
         # OPTIONAL - higher range equals increase randomness, less likely to align with exisiting feature
         hair = generateRandomNumber(0, 7)
-        print(str(hair))
         facialHair = generateRandomNumber(0, 10)
         jewelry = generateRandomNumber(0, 8)
         smoke = generateRandomNumber(0, 10)
@@ -92,30 +91,66 @@ def generateHomie(total):
         else:
             hair = 0
 
-        attributes = {
-            'body': body,
-            'eyes': eyes,
-            'mouth': mouth,
-            'hair': hair,
-            'facialHair': facialHair,
-            'jewelry': jewelry,
-            'smoke': smoke,
-            'hat': hat,
-            'glasses': glasses,
-            'mask': mask,
-            'special': special,
+        data = {
+            'name': 'DigiHomie #' + str(i),
+            'description': 'An Eternal Etherium Digital Homie!',
+            'image': 'www.whaterver.com',
+            'attributes': [
+                {
+                    'trait_type': 'Eyes',
+                    'value': eyes
+                },
+                {
+                    'trait_type': 'Mouth',
+                    'value': mouth
+                },
+                {
+                    'trait_type': 'Hair',
+                    'value': hair
+                },
+                {
+                    'trait_type': 'Facial Hair',
+                    'value': facialHair
+                },
+                {
+                    'trait_type': 'Jewelry',
+                    'value': jewelry
+                },
+                {
+                    'trait_type': 'Smoke',
+                    'value': smoke
+                },
+                {
+                    'trait_type': 'Hat',
+                    'value': hat
+                },
+                {
+                    'trait_type': 'Glasses',
+                    'value': glasses
+                },
+                {
+                    'trait_type': 'Mask',
+                    'value': mask
+                },
+                {
+                    'trait_type': 'Special',
+                    'value': special
+                }
+            ]
+
         }
-        homieAttrString = str(attributes)
+        #homieAttrString = str(attributes)
         # print(homieAttrString)
         # print(json.dumps(homieAttrString))
 
         # Generate Image
-        img0.show()
+        # img0.show()
         folder = "Homies/" + str(i) + "/"
         if not os.path.isdir(folder):
             os.mkdir(folder)
         img0.save(folder + str(i) + '.png', "PNG")
+
         with open(folder + 'data.json', 'w') as f:
-            json.dump(homieAttrString, f)
+            json.dump(data, f)
 
         i = i+1
