@@ -4,7 +4,7 @@ def createDataMap(i):
     dataMap = {
         'name': 'DigiHomie #' + str(i),
         'description': 'An Eternal Etherium Digital Homie!',
-        'image': 'www.whaterver.com',
+        'image': 'ipfs://<hash>',
         'background_color': '0F7CB3',
         'attributes': []
     }
