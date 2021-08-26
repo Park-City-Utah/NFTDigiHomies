@@ -1,4 +1,6 @@
 
+scripts/HomieScripts/Assets/Homies/*
+
 # chainlink-mix
 .vscode
 .env

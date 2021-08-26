@@ -3,13 +3,16 @@ import numpy as np
 import os as os
 import json as json
 from GenerateFeatureMap import *
+# from brownie import *  # solidity contract files
 
 
-# TODO Get random number from VFR consumer fuction
 def generateRandomNumber(lowIn, highIn):
     rng = np.random.default_rng()
     ranNumberArray = rng.integers(low=lowIn, high=highIn, size=1)
     return int(ranNumberArray[0])
+
+
+# TODO Get random number from VFR consumer fuction
 
 
 def generateHomie(total):
@@ -193,6 +196,6 @@ def generateHomie(total):
         with open(folder + 'data.json', 'w') as f:
             json.dump(data, f)
 
-        img0.show()
+        # img0.show()
 
         i = i+1
