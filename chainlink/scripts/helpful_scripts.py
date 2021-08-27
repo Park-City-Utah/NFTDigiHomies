@@ -119,8 +119,42 @@ def deploy_mocks(decimals=DECIMALS, initial_value=INITIAL_VALUE):
 
 
 def get_body(body_number):  # send in number of breed
-    switch = {0: 'Thin Light', 1: 'Thin Mid', 2: 'Thin Dark',
-              3: 'Thick Light', 4: 'Thick Mid', 5: 'Thick Dark'}
+    switch = {
+        0: 'Thin Light',
+        1: 'Thin Mid',
+        2: 'Thin Dark',
+        3: 'Thick Light',
+        4: 'Thick Mid',
+        5: 'Thick Dark'
+    }
     print(body_number)
     print(switch[body_number])
     return switch[body_number]
+
+
+def get_eyes(eye_number):
+    switch = {
+        0: 'Normal',
+        1: 'Peep',
+        2: 'Squint',
+        3: 'Peer',
+        4: 'Gold',
+    }
+    print(eye_number)
+    print(switch[eye_number])
+    return switch[eye_number]
+
+
+def get_mouth(mouth_number):
+    switch = {
+        0: 'Normal',
+        1: 'Grin',
+        2: 'Smile',
+        3: 'Ohh',
+        4: 'Lips',
+        5: 'Missing Tooth',
+        6: 'Gold Tooth'
+    }
+    print(mouth_number)
+    print(switch[mouth_number])
+    return switch[mouth_number]

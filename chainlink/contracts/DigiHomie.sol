@@ -16,12 +16,30 @@ contract DigiHomie is ERC721, VRFConsumerBase {
         ThickMid,
         ThickDark
     }
+    enum Eyes {
+        Normal,
+        Peep,
+        Squint,
+        Peer,
+        Gold
+    }
+    enum Mouth {
+        Normal,
+        Grin,
+        Smile,
+        Ohh,
+        Lips,
+        MissingTooth,
+        GoldTooth
+    }
 
     //mapping(uint256 => string) Body;
 
     mapping(bytes32 => address) public requestIdToSender;
     mapping(bytes32 => string) public requestIdToTokenURI;
     mapping(uint256 => Body) public tokenIdToBody;
+    mapping(uint256 => Eyes) public tokenIdToEyes;
+    mapping(uint256 => Mouth) public tokenIdToMouth;
     mapping(bytes32 => uint256) public requestIdToTokenId;
     event requestedCollectable(bytes32 indexed requestId);
 
@@ -59,8 +77,12 @@ contract DigiHomie is ERC721, VRFConsumerBase {
         _safeMint(homieOwner, newItemId);
         _setTokenURI(newItemId, tokenURI); //Optional
         //write randomnumber to py??
-        Body body = Body(randomness % 6); //1-4
+        Body body = Body(randomness % 6); //1-5
+        Eyes eyes = Eyes(randomness % 5); //1-4
+        Mouth mouth = Mouth(randomness % 7); //1-6
         tokenIdToBody[newItemId] = body;
+        tokenIdToEyes[newItemId] = eyes;
+        tokenIdToMouth[newItemId] = mouth;
         requestIdToTokenId[requestId] = newItemId;
         tokenCounter = tokenCounter + 1;
         // rando = randomNumer;        //Saves to global value, might be able to send to pythong
