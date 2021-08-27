@@ -11,7 +11,7 @@ def main():
     transaction.wait(1)
     # emit reques we have un digihomie
     requestId = transaction.events['requestedCollectable']['requestId']
-    time.sleep(45)
+    time.sleep(30)
     token_id = digiHomie.requestIdToTokenId(
         requestId)  # get token id from mapping
     body = get_body(digiHomie.tokenIdToBody(token_id))

@@ -119,6 +119,8 @@ def deploy_mocks(decimals=DECIMALS, initial_value=INITIAL_VALUE):
 
 
 def get_body(body_number):  # send in number of breed
-    switch = {1: 'Thin', 2: 'Thin', 3: 'Thin',
-              4: 'Thick', 5: 'Thick', 6: 'Thick'}
+    switch = {0: 'Thin Light', 1: 'Thin Mid', 2: 'Thin Dark',
+              3: 'Thick Light', 4: 'Thick Mid', 5: 'Thick Dark'}
+    print(body_number)
+    print(switch[body_number])
     return switch[body_number]

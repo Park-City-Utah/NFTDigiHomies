@@ -9,8 +9,12 @@ contract DigiHomie is ERC721, VRFConsumerBase {
     uint256 public tokenCounter;
     uint256 public rando;
     enum Body {
-        Thin,
-        Thick
+        ThinLight,
+        ThinMid,
+        ThinDark,
+        ThickLight,
+        ThickMid,
+        ThickDark
     }
 
     //mapping(uint256 => string) Body;
@@ -55,7 +59,7 @@ contract DigiHomie is ERC721, VRFConsumerBase {
         _safeMint(homieOwner, newItemId);
         _setTokenURI(newItemId, tokenURI); //Optional
         //write randomnumber to py??
-        Body body = Body(randomness % 2); //1-4
+        Body body = Body(randomness % 6); //1-4
         tokenIdToBody[newItemId] = body;
         requestIdToTokenId[requestId] = newItemId;
         tokenCounter = tokenCounter + 1;
