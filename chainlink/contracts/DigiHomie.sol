@@ -6,11 +6,13 @@ import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 contract DigiHomie is ERC721, VRFConsumerBase {
     bytes32 internal keyHash;
     uint256 public fee;
-    uint256 public tokenCounter = 0;
+    uint256 public tokenCounter;
+    uint256 public rando;
     enum Body {
         Thin,
         Thick
     }
+
     //mapping(uint256 => string) Body;
 
     mapping(bytes32 => address) public requestIdToSender;
@@ -30,16 +32,12 @@ contract DigiHomie is ERC721, VRFConsumerBase {
     {
         keyHash = _keyhash;
         fee = 0.1 * 10**18; //.1 LINK 1000000000000000000
+        tokenCounter = 0;
     }
 
-    function createHomie(uint256 userProvidedSeed, string memory tokenURI)
-        public
-        returns (bytes32)
-    {
-        bytes32 requestId = requestRandomness(
-            keyHash,
-            fee /*, userProvidedSeed*/
-        );
+    //Creates contract for each homie
+    function createHomie(string memory tokenURI) public returns (bytes32) {
+        bytes32 requestId = requestRandomness(keyHash, fee);
         //chainlink returns request and random, need to map
         requestIdToSender[requestId] = msg.sender;
         requestIdToTokenURI[requestId] = tokenURI;
@@ -47,7 +45,7 @@ contract DigiHomie is ERC721, VRFConsumerBase {
     }
 
     //Return randomness
-    function fulfillRandomness(bytes32 requestId, uint256 randomNumer)
+    function fulfillRandomness(bytes32 requestId, uint256 randomness)
         internal
         override
     {
@@ -57,10 +55,11 @@ contract DigiHomie is ERC721, VRFConsumerBase {
         _safeMint(homieOwner, newItemId);
         _setTokenURI(newItemId, tokenURI); //Optional
         //write randomnumber to py??
-        Body body = Body(((randomNumer % 3) + 1)); //1-4
+        Body body = Body(randomness % 2); //1-4
         tokenIdToBody[newItemId] = body;
         requestIdToTokenId[requestId] = newItemId;
         tokenCounter = tokenCounter + 1;
+        // rando = randomNumer;        //Saves to global value, might be able to send to pythong
     }
 
     //Set metadata
@@ -71,6 +70,11 @@ contract DigiHomie is ERC721, VRFConsumerBase {
         );
         _setTokenURI(tokenId, _tokenURI);
     }
+
+    //Returns random number
+    /*function getRandomNumber() public returns (bytes32 requestId) {
+        return requestRandomness(keyHash, fee);
+    }*/
 
     /* function loadMap() external {
         body[1] = "Thin";

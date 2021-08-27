@@ -10,7 +10,8 @@ from brownie import (
 )
 from web3 import Web3
 
-NON_FORKED_LOCAL_BLOCKCHAIN_ENVIRONMENTS = ["hardhat", "development", "ganache"]
+NON_FORKED_LOCAL_BLOCKCHAIN_ENVIRONMENTS = [
+    "hardhat", "development", "ganache"]
 LOCAL_BLOCKCHAIN_ENVIRONMENTS = NON_FORKED_LOCAL_BLOCKCHAIN_ENVIRONMENTS + [
     "mainnet-fork",
     "binance-fork",
@@ -62,7 +63,8 @@ def get_contract(contract_name):
         contract = contract_type[-1]
     else:
         try:
-            contract_address = config["networks"][network.show_active()][contract_name]
+            contract_address = config["networks"][network.show_active(
+            )][contract_name]
             contract = Contract.from_abi(
                 contract_type._name, contract_address, contract_type.abi
             )
@@ -81,7 +83,7 @@ def fund_with_link(
 ):
     account = account if account else get_account()
     link_token = link_token if link_token else get_contract("link_token")
-    ### Keep this line to show how it could be done without deploying a mock
+    # Keep this line to show how it could be done without deploying a mock
     # tx = interface.LinkTokenInterface(link_token.address).transfer(
     #     contract_address, amount, {"from": account}
     # )
@@ -114,3 +116,9 @@ def deploy_mocks(decimals=DECIMALS, initial_value=INITIAL_VALUE):
     mock_oracle = MockOracle.deploy(link_token.address, {"from": account})
     print(f"Deployed to {mock_oracle.address}")
     print("Mocks Deployed!")
+
+
+def get_body(body_number):  # send in number of breed
+    switch = {1: 'Thin', 2: 'Thin', 3: 'Thin',
+              4: 'Thick', 5: 'Thick', 6: 'Thick'}
+    return switch[body_number]
