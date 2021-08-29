@@ -10,6 +10,8 @@ from brownie import (
     VRFCoordinatorMock,
     Contract,
 )
+from scripts.helpful_scripts import *
+from metadata import sample_metadata
 from web3 import Web3
 from PIL import Image
 import numpy as np
@@ -19,114 +21,38 @@ from pathlib import Path
 import requests
 import numpy as np
 
-NON_FORKED_LOCAL_BLOCKCHAIN_ENVIRONMENTS = [
-    "hardhat", "development", "ganache"]
-LOCAL_BLOCKCHAIN_ENVIRONMENTS = NON_FORKED_LOCAL_BLOCKCHAIN_ENVIRONMENTS + [
-    "mainnet-fork",
-    "binance-fork",
-    "matic-fork",
-]
 
-contract_to_mock = {
-    "link_token": LinkToken,
-    "eth_usd_price_feed": MockV3Aggregator,
-    "vrf_coordinator": VRFCoordinatorMock,
-    "oracle": MockOracle,
-}
+def main():
+    number = 2
+    iteration = 0
+    while(iteration <= number):
+        # Set homie to current iteration
+        digiHomie = DigiHomie[len(DigiHomie)-1]  # Get the most recent
+        print("Iteration: " + str(iteration))
+        print("Token Counter: " + str(digiHomie.tokenCounter()))
+        meta_data = generate_meta_data(iteration)
 
-DECIMALS = 18
-INITIAL_VALUE = Web3.toWei(2000, "ether")
+        # Create image, meta, upload both to ipfs, sets token URI
+        # Returns uri (hash) of meta_data on ipfs
+        uri = generateHomie(iteration, meta_data)
 
-
-def get_account(index=None, id=None):
-    if index:
-        return accounts[index]
-    if network.show_active() in LOCAL_BLOCKCHAIN_ENVIRONMENTS:
-        return accounts[0]
-    if id:
-        return accounts.load(id)
-    return accounts.add(config["wallets"]["from_key"])
+        # Create homie with
+        dev = accounts.add(config['wallets']['from_key'])
+        transaction = digiHomie.createHomie(
+            uri, {"from": dev})  # no seed needed
+        transaction.wait(2)
+        iteration = iteration+1  # = to counter?
 
 
-def get_contract(contract_name):
-    """If you want to use this function, go to the brownie config and add a new entry for
-    the contract that you want to be able to 'get'. Then add an entry in the in the variable 'contract_to_mock'.
-    You'll see examples like the 'link_token'.
-        This script will then either:
-            - Get a address from the config
-            - Or deploy a mock to use for a network that doesn't have it
-
-        Args:
-            contract_name (string): This is the name that is refered to in the
-            brownie config and 'contract_to_mock' variable.
-
-        Returns:
-            brownie.network.contract.ProjectContract: The most recently deployed
-            Contract of the type specificed by the dictonary. This could be either
-            a mock or the 'real' contract on a live network.
-    """
-    contract_type = contract_to_mock[contract_name]
-    if network.show_active() in NON_FORKED_LOCAL_BLOCKCHAIN_ENVIRONMENTS:
-        if len(contract_type) <= 0:
-            deploy_mocks()
-        contract = contract_type[-1]
-    else:
-        try:
-            contract_address = config["networks"][network.show_active(
-            )][contract_name]
-            contract = Contract.from_abi(
-                contract_type._name, contract_address, contract_type.abi
-            )
-        except KeyError:
-            print(
-                f"{network.show_active()} address not found, perhaps you should add it to the config or deploy mocks?"
-            )
-            print(
-                f"brownie run scripts/deploy_mocks.py --network {network.show_active()}"
-            )
-    return contract
-
-
-def fund_with_link(
-    contract_address, account=None, link_token=None, amount=2000000000000000000
-):
-    account = account if account else get_account()
-    link_token = link_token if link_token else get_contract("link_token")
-    # Keep this line to show how it could be done without deploying a mock
-    # tx = interface.LinkTokenInterface(link_token.address).transfer(
-    #     contract_address, amount, {"from": account}
-    # )
-    tx = link_token.transfer(contract_address, amount, {"from": account})
-    print("Funded {}".format(contract_address))
-    return tx
-
-
-def deploy_mocks(decimals=DECIMALS, initial_value=INITIAL_VALUE):
-    """
-    Use this script if you want to deploy mocks to a testnet
-    """
-    print(f"The active network is {network.show_active()}")
-    print("Deploying Mocks...")
-    account = get_account()
-    print("Deploying Mock Link Token...")
-    link_token = LinkToken.deploy({"from": account})
-    print("Deploying Mock Price Feed...")
-    mock_price_feed = MockV3Aggregator.deploy(
-        decimals, initial_value, {"from": account}
-    )
-    print(f"Deployed to {mock_price_feed.address}")
-    print("Deploying Mock VRFCoordinator...")
-    mock_vrf_coordinator = VRFCoordinatorMock.deploy(
-        link_token.address, {"from": account}
-    )
-    print(f"Deployed to {mock_vrf_coordinator.address}")
-
-    print("Deploying Mock Oracle...")
-    mock_oracle = MockOracle.deploy(link_token.address, {"from": account})
-    print(f"Deployed to {mock_oracle.address}")
-    print("Mocks Deployed!")
-
-# Required - random generation to exclude 0 'get_<feature>'
+def generate_meta_data(token_id):
+    homie_metadata = sample_metadata.metadata_template
+    homie_metadata["name"] = str(token_id)
+    homie_metadata["description"] = 'An Eternal Etherium Digital Homie!'
+    homie_metadata["image"] = ''
+    homie_metadata["background_color"] = '0F7CB3'
+    # Will add image and attributes after creation of Homie (image, meta)
+    # homie_metadata["attributes"] = [{}]
+    return homie_metadata
 
 
 def get_body(body_number):
@@ -279,9 +205,6 @@ def get_special(special_number):
 
 
 def generateHomie(token_id, data):
-    # i = 1
-    # while i <= total:
-    # print("Iteration: " + str(i))
 
     def generateRandomNumber(lowIn, highIn):
         rng = np.random.default_rng()
@@ -300,21 +223,6 @@ def generateHomie(token_id, data):
     glasses = generateRandomNumber(0, 15)
     mask = generateRandomNumber(0, 35)
     special = generateRandomNumber(0, 250)
-
-    # TODO - replace with link oracle random number & modulo range %7 = 0-6, %7+1 = 1-7
-    # REQUIRED
-    """ body = (random % 6)+1  # 0-5, +1 = 1-6
-    eyes = (random % 5) + 1  # 0-4, +1 = 1-5
-    mouth = (random % 7) + 1  # 0-6, +1 = 1-7
-    # OPTIONAL - higher range equals increase randomness, less likely to align with exisiting feature
-    hair = random % 8  # 0-7#
-    facialHair = random % 10  # 0-10, only 7 but 7/10 is less likely
-    jewelry = random % 8  # 0-8, only 5 but 5/8 is less likely
-    smoke = random % 10  # 0-10, only 4 but 4/10 is less likely
-    hat = random % 18  # 0-25, only 4 but 4/25 is less likely
-    glasses = random % 10  # 0-15, only 6 but 6/15 is less likely
-    mask = random % 35  # 0-35, only 5 but 5/35 is less likely
-    special = random % 1500  # 0-1500,  only 2 but 2/1500 is less likely"""
 
     # Feature map
     bodyMap = createBodyMap()
@@ -524,28 +432,22 @@ def generateHomie(token_id, data):
     image_to_upload = None
     meta_to_upload = None
     if os.getenv("UPLOAD_IPFS") == "true":
-        image_path = folder + '0.png'
-        meta_path = folder + 'data.json'
+        image_path = folder + str(token_id) + '.png'
+        meta_path = folder + str(token_id) + 'data.json'
         print('ImagePath: ' + image_path)
         # Returns the image uri
-        image_to_upload = upload_to_ipfs(image_path)
+        image_to_upload = upload_to_ipfs(image_path, str(token_id) + '.png')
 
-        # Add image to
+        # Add image to IPFS
         data['image'] = image_to_upload
-        with open(folder + 'data.json', 'w') as f:
+        with open(folder + str(token_id) + 'data.json', 'w') as f:
             json.dump(data, f)
         # Returns the meta uri
-        meta_to_upload = upload_to_ipfs(meta_path)
-
-        # Call set_token_uri with metadata
-        print("Setting tokenURI for token: {}".format(token_id))
-        digiHomie = DigiHomie[token_id]  # Get the most recent
-        digiHomie.setTokenURI(token_id, meta_to_upload)
-
- #  i = i+1
+        meta_to_upload = upload_to_ipfs(meta_path, str(token_id) + 'data.json')
+    return meta_to_upload
 
 
-def upload_to_ipfs(filepath):
+def upload_to_ipfs(filepath, name):
     with Path(filepath).open("rb") as fp:
         image_binary = fp.read()
         ipfs_url = "http://localhost:5001"
@@ -556,20 +458,18 @@ def upload_to_ipfs(filepath):
         ipfs_hash = response.json()['Hash']
         filename = filepath.split("/")[-1:][0]
         print("Filename " + filename)
-        uri = 'https://ipfs.io/ipfs/{}?filename={}'.format(ipfs_hash, filename)
-        print("URI " + uri)
-        return uri
+        # uri = 'https://ipfs.io/ipfs/{}?filename={}'.format(ipfs_hash, filename)
+        # print("URI " + uri)
+        uriForOS = "ipfs://{}".format(ipfs_hash)
+        print("URI " + uriForOS)
+        # return uri
+
+        #ipfs_pin_command = "ipfs pin remote add --service=Pinata {}".format(ipfs_hash)
+        pin_response = requests.post(
+            ipfs_url + "/api/v0/pin/remote/add?arg={}&name={}&service=Pinata".format(ipfs_hash, name))
+        print(pin_response)
+        return uriForOS
     return None
-
-
-""" def set_token_uri(token_id, uri):
-    print(network.show_active())
-    digiHomie = DigiHomie[token_id]  # Get the most recent
-    print("The tokenId is: {}".format(
-        token_id))
-    if digiHomie.tokenURI(token_id).startswith("None"):
-        print("Setting tokenURI of {}".format(token_id))
-        digiHomie.set_TokenURI(token_id, uri) """
 
 
 def createBodyMap():

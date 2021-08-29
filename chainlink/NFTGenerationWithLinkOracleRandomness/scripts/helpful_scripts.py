@@ -1,7 +1,6 @@
 from pathlib import Path
 from brownie import (
     network,
-    DigiHomie,
     accounts,
     config,
     LinkToken,
@@ -17,7 +16,6 @@ import os as os
 import json as json
 from pathlib import Path
 import requests
-import numpy as np
 
 NON_FORKED_LOCAL_BLOCKCHAIN_ENVIRONMENTS = [
     "hardhat", "development", "ganache"]
@@ -88,7 +86,7 @@ def get_contract(contract_name):
 
 
 def fund_with_link(
-    contract_address, account=None, link_token=None, amount=2000000000000000000
+    contract_address, account=None, link_token=None, amount=1000000000000000000
 ):
     account = account if account else get_account()
     link_token = link_token if link_token else get_contract("link_token")
@@ -278,32 +276,14 @@ def get_special(special_number):
     return switch[special_number]
 
 
-def generateHomie(token_id, data):
+def generateHomie(random, token_id, data):
     # i = 1
     # while i <= total:
     # print("Iteration: " + str(i))
 
-    def generateRandomNumber(lowIn, highIn):
-        rng = np.random.default_rng()
-        ranNumberArray = rng.integers(low=lowIn, high=highIn, size=1)
-        return int(ranNumberArray[0])
-
-    body = generateRandomNumber(1, 6)
-    eyes = generateRandomNumber(1, 4)
-    mouth = generateRandomNumber(1, 7)
-    # OPTIONAL - higher range equals increase randomness, less likely to align with exisiting feature
-    hair = generateRandomNumber(0, 8)
-    facialHair = generateRandomNumber(0, 10)
-    jewelry = generateRandomNumber(0, 10)
-    smoke = generateRandomNumber(0, 10)
-    hat = generateRandomNumber(0, 25)
-    glasses = generateRandomNumber(0, 15)
-    mask = generateRandomNumber(0, 35)
-    special = generateRandomNumber(0, 250)
-
     # TODO - replace with link oracle random number & modulo range %7 = 0-6, %7+1 = 1-7
     # REQUIRED
-    """ body = (random % 6)+1  # 0-5, +1 = 1-6
+    body = (random % 6)+1  # 0-5, +1 = 1-6
     eyes = (random % 5) + 1  # 0-4, +1 = 1-5
     mouth = (random % 7) + 1  # 0-6, +1 = 1-7
     # OPTIONAL - higher range equals increase randomness, less likely to align with exisiting feature
@@ -311,10 +291,10 @@ def generateHomie(token_id, data):
     facialHair = random % 10  # 0-10, only 7 but 7/10 is less likely
     jewelry = random % 8  # 0-8, only 5 but 5/8 is less likely
     smoke = random % 10  # 0-10, only 4 but 4/10 is less likely
-    hat = random % 18  # 0-25, only 4 but 4/25 is less likely
-    glasses = random % 10  # 0-15, only 6 but 6/15 is less likely
+    hat = random % 25  # 0-25, only 4 but 4/25 is less likely
+    glasses = random % 15  # 0-15, only 6 but 6/15 is less likely
     mask = random % 35  # 0-35, only 5 but 5/35 is less likely
-    special = random % 1500  # 0-1500,  only 2 but 2/1500 is less likely"""
+    special = random % 1500  # 0-1500, only 2 but 2/1500 is less likely
 
     # Feature map
     bodyMap = createBodyMap()
@@ -515,33 +495,21 @@ def generateHomie(token_id, data):
     # Resize image - maintain quality
     # back = Image.open("Background/backGround.png")
     # back.paste(img0, (0, 0), img0)
-    resized_img = img0.resize((300, 300), resample=Image.NEAREST)
+    resized_img = img0.resize((350, 350), resample=Image.NEAREST)
     resized_img.save(folder + str(token_id) + '.png', "PNG")
+
+    data['image'] = 'ipfs://QmdGqDw4MuAov7wFZkmLd2H29sMcFN6kmPLranX7rUSd1i'
+    with open(folder + 'data.json', 'w') as f:
+        json.dump(data, f)
 
     img0.show()
 
     # IPFS upload
     image_to_upload = None
-    meta_to_upload = None
     if os.getenv("UPLOAD_IPFS") == "true":
-        image_path = folder + '0.png'
-        meta_path = folder + 'data.json'
-        print('ImagePath: ' + image_path)
-        # Returns the image uri
-        image_to_upload = upload_to_ipfs(image_path)
-
-        # Add image to
-        data['image'] = image_to_upload
-        with open(folder + 'data.json', 'w') as f:
-            json.dump(data, f)
-        # Returns the meta uri
-        meta_to_upload = upload_to_ipfs(meta_path)
-
-        # Call set_token_uri with metadata
-        print("Setting tokenURI for token: {}".format(token_id))
-        digiHomie = DigiHomie[token_id]  # Get the most recent
-        digiHomie.setTokenURI(token_id, meta_to_upload)
-
+        image_path = "{}{}/{}.png".format(folder, str(token_id), str(token_id))
+        print('ImagePath' + image_path)
+    image_to_upload = upload_to_ipfs(image_path)
  #  i = i+1
 
 
@@ -551,25 +519,7 @@ def upload_to_ipfs(filepath):
         ipfs_url = "http://localhost:5001"
         response = requests.post(
             ipfs_url + "/api/v0/add", files={"file": image_binary})
-        # print("Response " + response.json())
-        print("Hash " + response.json()['Hash'])
-        ipfs_hash = response.json()['Hash']
-        filename = filepath.split("/")[-1:][0]
-        print("Filename " + filename)
-        uri = 'https://ipfs.io/ipfs/{}?filename={}'.format(ipfs_hash, filename)
-        print("URI " + uri)
-        return uri
-    return None
-
-
-""" def set_token_uri(token_id, uri):
-    print(network.show_active())
-    digiHomie = DigiHomie[token_id]  # Get the most recent
-    print("The tokenId is: {}".format(
-        token_id))
-    if digiHomie.tokenURI(token_id).startswith("None"):
-        print("Setting tokenURI of {}".format(token_id))
-        digiHomie.set_TokenURI(token_id, uri) """
+        print(response.json())
 
 
 def createBodyMap():
