@@ -10,9 +10,6 @@ def main():
     digiHomie = DigiHomie[len(DigiHomie)-1]
     number_of_tokens = digiHomie.tokenCounter()
     print("The number of tokens deployed is {}".format(number_of_tokens))
-    #write_metadata(digiHomie, number_of_tokens)
-    #rando = 111112323234234213434534453442432424
-    #print("The random number is " + str(rando))
     for token_id in range(1):
         print("Current token: {}".format(token_id))
         homie_metadata = sample_metadata.metadata_template
