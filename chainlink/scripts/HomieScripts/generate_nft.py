@@ -17,42 +17,67 @@ from pathlib import Path
 import requests
 import numpy as np
 
+LOADINGURI = "ipfs://Qma5zEsnV16qe9Dzh83hucDiHzfqCaMGxeKghgSiWeV6ps"
+
 
 def main():
-    digiHomie = DigiHomie[len(DigiHomie) - 1]
-    set_tokenURI(3, digiHomie)
 
-    createHomies(2, True)
-    createHomies(4, False)
+    # Create tokens
+    createHomies(2, True)  # With URI
+    createHomies(4, False)  # Without URI (mapped but not exposed)
     print("Total tokens is {}".format(getTokenCount()))
-    print("URI is {} ".format(getTokenURI(1)))
-    digiHomie = DigiHomie[len(DigiHomie) - 1]
-    set_tokenURI(3, digiHomie)
+
+    # Print token URI, mapped and set
+    uri = getTokenURI(2)
+    print("URI is {}".format(uri))
+    mappedURI = getMappedURI(2)
+    print("Mapped URI is {}".format(mappedURI))
+
+    # Resolve mapped
+    resolveTokenURI(2)
+    # Print - should now match
+    uri = getTokenURI(2)
+    print("URI is {}".format(uri))
+    mappedURI = getMappedURI(2)
+    print("Mapped URI is {}".format(mappedURI))
+
+    # Resolve ALL tokens should resolve rest
+    resolveAllTokensURIs()
+    # Print - should now match
+    uri = getTokenURI(2)
+    print("URI is {}".format(uri))
+    mappedURI = getMappedURI(2)
+    print("Mapped URI is {}".format(mappedURI))
 
 
-# Retrieve the URI of metadata by tokenId
+## Retrieve metadata URI by tokenId()##
 def getTokenURI(tokenId):
     digiHomie = DigiHomie[len(DigiHomie)-1]
-    tokenURI = digiHomie.getTokenURI(1)
+    tokenURI = digiHomie.tokenURI(tokenId)
     return tokenURI
 
 
-# Retreive total tokens/homies deployed
+##Retrieve metadata URI from mapping via tokenId##
+def getMappedURI(tokenId):
+    digiHomie = DigiHomie[len(DigiHomie)-1]
+    mappedURI = digiHomie.tokenIdToURI(tokenId)
+    return mappedURI
+
+
+##Retreive total tokens/homies deployed##
 def getTokenCount():
     print("Working on " + network.show_active())
     digiHomie = DigiHomie[len(DigiHomie)-1]
     number_of_homies = digiHomie.tokenCounter()
-    #print("The number of NFTs deployed: {}".format(number_of_homies))
+    # print("The number of NFTs deployed: {}".format(number_of_homies))
     return number_of_homies
 
-# Creates Homies - image generation, metadata gereration, upload to IPFS, mint
-# with URI resolved to final json/image
 
-# Creates Homies, does not set IPFS unless 'true'
-
-
+##Creates Homies - 'setURI' boolean determines URI##
+##URI = FALSE - Set URI to 'loading' and meta to 'TBD'##
+##URI = FALSE - Set IPFS URI in mapping for later resolution##
+##URI = TRUE - Set URI & mapping to IPFS URI##
 def createHomies(total, setURI):
-    loadingURI = "ipfs://QmQPyeUtdGiUF5YQFtCtgyAY1ds5LQE1zP8Ygfx2F66nLN"
     digiHomie = DigiHomie[len(DigiHomie)-1]  # Get the most recent
     iteration = digiHomie.tokenCounter()
     while(iteration < total):
@@ -69,42 +94,46 @@ def createHomies(total, setURI):
         # Create Homie
         dev = accounts.add(config['wallets']['from_key'])
 
-        if(setURI):
+        if(setURI == True):
             transaction = digiHomie.mintHomie(
                 uri, {"from": dev})
             print("Setting URI to {} ".format(uri))
         else:
-            transaction = digiHomie.mintHomie(
-                loadingURI, {"from": dev})
-            print("Setting URI to 'loading' {}".format(loadingURI))
+            transaction = digiHomie.mintHomiePending(
+                uri, {"from": dev})
+            print("Setting URI to 'loading' {}".format(LOADINGURI))
         transaction.wait(1)
         iteration = iteration+1
 
-# Resolve all URIs current not set (user Minted)
 
-
-def setAllTokens():
+##Sets URI to mapped value, exposing IPFS URI (image, desc etc)##
+def resolveTokenURI(token_id):
     print("Working on " + network.show_active())
+    dev = accounts.add(config["wallets"]["from_key"])
+    digiHomie = DigiHomie[len(DigiHomie) - 1]
+    uri = digiHomie.tokenIdToURI(token_id)
+    print("Resoving URI to mapped value: {}".format(uri))
+    digiHomie.setTokenURI(
+        token_id, uri, {"from": dev})
+    print('Please give up to 20 minutes, and hit the "refresh metadata" button')
+
+
+##Resolve all URIs current not set (user Minted)##
+def resolveAllTokensURIs():
+    print("Working on " + network.show_active())
+    dev = accounts.add(config["wallets"]["from_key"])
     digiHomie = DigiHomie[len(DigiHomie) - 1]
     number_of_homies = digiHomie.tokenCounter()
     print(
         "The number of tokens you've deployed is: "
         + str(number_of_homies))
     for token_id in range(number_of_homies):
-        set_tokenURI(token_id, digiHomie.tokenIdToURI[token_id])
+        uri = digiHomie.tokenIdToURI(token_id)
+        print("Resoving URI to mapped value: {}".format(uri))
+        digiHomie.setTokenURI(token_id, uri, {"from": dev})
 
 
-def set_tokenURI(token_id, nft_contract):
-    dev = accounts.add(config["wallets"]["from_key"])
-    nft_contract.setTokenURI(
-        token_id, nft_contract.tokenIdToURI(token_id), {"from": dev})
-    print('Please give up to 20 minutes, and hit the "refresh metadata" button')
-
-# Will resolve the LAST token
-# ToDo need to change to target by tokenID
-
-
-def resolveTokenURI(tokenId):
+""" def resolveTokenURIs(tokenId):
     digiHomie = DigiHomie[((tokenId)-1)]
     number_of_homies = digiHomie.tokenCounter()
     print("Total number deployed : {}".format(digiHomie.tokenCounter()))
@@ -113,14 +142,14 @@ def resolveTokenURI(tokenId):
         dev = accounts.add(config['wallets']['from_key'])
         transaction = digiHomie.resolveTokenURI(tokenId,
                                                 {"from": dev})
-        transaction.wait(1)
+        transaction.wait(1) """
 
 
 def generate_meta_data(token_id):
     homie_metadata = sample_metadata.metadata_template
     homie_metadata["name"] = str(token_id)
-    homie_metadata["description"] = 'An Eternal Etherium Digital Homie!'
-    homie_metadata["image"] = 'ipfs://QmdtcV3xXFoF7hPBqiKCatfH6gwX1G9oMCTtC6k7VQfmKd'
+    homie_metadata["description"] = 'An Eternal Ethereum Digital Homie!'
+    homie_metadata["image"] = ''
     homie_metadata["background_color"] = '0F7CB3'
     # Will add image and attributes after creation of Homie (image, meta)
     homie_metadata["attributes"] = []
@@ -292,17 +321,6 @@ def generateHomie(token_id, data):
             if(mask <= 2):
                 Swag = Swag + 20
         else:
-            if(0 < smoke <= 4):
-                img6 = Image.open("Assets/Smoke/" + str(smoke) + ".png")
-                img0.paste(img6, (0, 0), img6)
-                data['attributes'].append(
-                    {
-                        'trait_type': 'Smoke',
-                        'value': smokeMap[smoke]
-                    })
-                Swag = Swag + 15
-            else:
-                smoke = 0
             if((0 < hat <= 4) and (hair != 6)):
                 img7 = Image.open("Assets/Hat/" + str(hat) + ".png")
                 img0.paste(img7, (0, 0), img7)
@@ -332,6 +350,17 @@ def generateHomie(token_id, data):
                     Swag = Swag = 5
             else:
                 glasses = 0
+            if(0 < smoke <= 4):
+                img6 = Image.open("Assets/Smoke/" + str(smoke) + ".png")
+                img0.paste(img6, (0, 0), img6)
+                data['attributes'].append(
+                    {
+                        'trait_type': 'Smoke',
+                        'value': smokeMap[smoke]
+                    })
+                Swag = Swag + 15
+            else:
+                smoke = 0
             mask = 0        # img0.show()
     data['attributes'].append(
         {
@@ -339,7 +368,7 @@ def generateHomie(token_id, data):
             'trait_type': 'Swag',
             'value': Swag
         })
-    #print("Swag: {}".format(str(Swag)))
+    # print("Swag: {}".format(str(Swag)))
 
     # Create and save data
     folder = "Assets/Homies/{}/".format(str(token_id))
@@ -369,7 +398,6 @@ def generateHomie(token_id, data):
         # Returns the meta uri
         meta_to_upload = upload_to_ipfs(meta_path, str(token_id) + 'data.json')
     return meta_to_upload
-
 # Uploads to local IPFS, pins in cloud
 
 

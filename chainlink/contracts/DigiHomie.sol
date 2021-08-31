@@ -7,6 +7,8 @@ contract DigiHomie is ERC721, Ownable {
     uint256 public MAX_TOKENS = 25000;
     uint256 public tokenPrice = 10000000000000000; //.01 Eth
     uint256 public tokenCounter;
+    string public LOADINGURI =
+        "ipfs://Qma5zEsnV16qe9Dzh83hucDiHzfqCaMGxeKghgSiWeV6ps";
     mapping(uint256 => string) public tokenIdToURI;
 
     constructor() public ERC721("DigiHomies", "DH") {
@@ -26,7 +28,25 @@ contract DigiHomie is ERC721, Ownable {
         //URI stored for user Mint
         tokenIdToURI[newItemId] = tokenURI;
         _safeMint(homieOwner, newItemId);
-        setTokenURI(newItemId, tokenURI);
+        _setTokenURI(newItemId, tokenURI);
+
+        tokenCounter = tokenCounter + 1;
+    }
+
+    //Creates token
+    function mintHomiePending(string memory tokenURI)
+        public
+        onlyOwner
+        returns (bytes32)
+    {
+        //Use newItemId and Counter, prior to tokenId via mint
+        uint256 newItemId = tokenCounter;
+        address homieOwner = msg.sender;
+
+        //URI stored for user Mint
+        tokenIdToURI[newItemId] = tokenURI;
+        _safeMint(homieOwner, newItemId);
+        _setTokenURI(newItemId, LOADINGURI);
 
         tokenCounter = tokenCounter + 1;
     }
@@ -50,7 +70,7 @@ contract DigiHomie is ERC721, Ownable {
         for (uint256 i = 0; i < numTokens; i++) {
             uint256 mintIndex = totalSupply();
             _safeMint(msg.sender, mintIndex);
-            setTokenURI(mintIndex, tokenIdToURI[mintIndex]);
+            _setTokenURI(mintIndex, tokenIdToURI[mintIndex]);
         }
     }
 
@@ -60,7 +80,7 @@ contract DigiHomie is ERC721, Ownable {
     }
 
     //Set metadata - Restricted to contract owner
-    function setTokenURI(uint256 tokenId, string memory _tokenURI)
+    function setTokenURI(uint256 tokenId, string memory tokenURI)
         public
         onlyOwner
     {
@@ -69,14 +89,9 @@ contract DigiHomie is ERC721, Ownable {
             "ERC721: transfer caller is not owner or approved."
         );
         require(_exists(tokenId), "TokenId does not exist");
-        //Set Mapping
-        tokenIdToURI[tokenId] = _tokenURI;
+        //Set Mapping - When pending meta used, we need mapping for future
+        //tokenURI = tokenIdToURI[tokenId];
         //Set with Homie mapping (resolve proper URI)
-        _setTokenURI(tokenId, _tokenURI);
-    }
-
-    function getTokenURI(uint256 tokenId) public view returns (string memory) {
-        require(_exists(tokenId));
-        return tokenIdToURI[tokenId];
+        _setTokenURI(tokenId, tokenURI);
     }
 }
