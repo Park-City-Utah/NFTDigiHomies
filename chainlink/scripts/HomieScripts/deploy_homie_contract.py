@@ -10,9 +10,6 @@ def main():
     print(network.show_active())
     publish_source = False
     digiHomie = DigiHomie.deploy(
-        config['networks'][network.show_active()]['vrf_coordinator'],
-        config['networks'][network.show_active()]['link_token'],
-        config['networks'][network.show_active()]['keyhash'],
         {"from": dev},
         publish_source=publish_source
     )
