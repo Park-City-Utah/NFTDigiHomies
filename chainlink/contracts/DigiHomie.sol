@@ -4,11 +4,10 @@ import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract DigiHomie is ERC721, Ownable {
-    uint256 public MAX_TOKENS = 25000;
-    uint256 public tokenPrice = 10000000000000000; //.01 Eth
+    uint256 public MAX_TOKENS = 5000;
     uint256 public tokenCounter;
     string public LOADINGURI =
-        "ipfs://Qma5zEsnV16qe9Dzh83hucDiHzfqCaMGxeKghgSiWeV6ps";
+        "ipfs://Qme9i2UjhqA6evVSWZaCHgSF4AvgQzsb4mVUDwP971ZNfL";
     mapping(uint256 => string) public tokenIdToURI;
 
     constructor() public ERC721("DigiHomies", "DH") {
@@ -21,6 +20,7 @@ contract DigiHomie is ERC721, Ownable {
         onlyOwner
         returns (bytes32)
     {
+        require((tokenCounter < MAX_TOKENS), "Exceeds maximum token supply.");
         //Use newItemId and Counter, prior to tokenId via mint
         uint256 newItemId = tokenCounter;
         address homieOwner = msg.sender;
@@ -39,6 +39,7 @@ contract DigiHomie is ERC721, Ownable {
         onlyOwner
         returns (bytes32)
     {
+        require((tokenCounter < MAX_TOKENS), "Exceeds maximum token supply.");
         //Use newItemId and Counter, prior to tokenId via mint
         uint256 newItemId = tokenCounter;
         address homieOwner = msg.sender;
@@ -47,36 +48,28 @@ contract DigiHomie is ERC721, Ownable {
         tokenIdToURI[newItemId] = tokenURI;
         _safeMint(homieOwner, newItemId);
         _setTokenURI(newItemId, LOADINGURI);
-
         tokenCounter = tokenCounter + 1;
     }
 
     //UserMint - allow user to create new (resolve URI)
-    function userMintHomies(uint256 numTokens) public payable {
+    function userMintHomies(uint256 numTokens) public {
         require(
-            SafeMath.add(totalSupply(), numTokens) <= MAX_TOKENS,
+            SafeMath.add(tokenCounter, numTokens) < MAX_TOKENS,
             "Exceeds maximum token supply."
         );
         require(
             numTokens > 0 && numTokens <= 10,
             "Minting must be a min of 1 and a max of 10."
         );
-        require(
-            msg.value >= SafeMath.mul(calculatePrice(), numTokens),
-            "Amount of Ether sent is not correct."
-        );
+        uint256 newItemId = tokenCounter;
 
         //Iterate numTokens, mint & resolve URI to mapped URI
         for (uint256 i = 0; i < numTokens; i++) {
-            uint256 mintIndex = totalSupply();
+            uint256 mintIndex = SafeMath.add(i, newItemId);
             _safeMint(msg.sender, mintIndex);
             _setTokenURI(mintIndex, tokenIdToURI[mintIndex]);
+            tokenCounter = tokenCounter + 1;
         }
-    }
-
-    function calculatePrice() public view returns (uint256) {
-        require(totalSupply() < MAX_TOKENS, "No more tokens");
-        return tokenPrice; // 0.1 ETH
     }
 
     //Set metadata - Restricted to contract owner
@@ -89,9 +82,6 @@ contract DigiHomie is ERC721, Ownable {
             "ERC721: transfer caller is not owner or approved."
         );
         require(_exists(tokenId), "TokenId does not exist");
-        //Set Mapping - When pending meta used, we need mapping for future
-        //tokenURI = tokenIdToURI[tokenId];
-        //Set with Homie mapping (resolve proper URI)
         _setTokenURI(tokenId, tokenURI);
     }
 }
