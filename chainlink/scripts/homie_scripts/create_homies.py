@@ -23,8 +23,8 @@ ASSETFOLDER = "../../Assets/"
 
 def main():
     # Create tokens
-    # createHomies(4, True)  # With URI
-    # createHomies(6, False)  # Without URI (mapped but not exposed)
+    createHomies(2, True)  # With URI
+    # createHomies(2, False)  # Without URI (mapped but not exposed)
     # print("Total tokens is {}".format(getTokenCount()))
 
     # Resolve mapped
@@ -33,9 +33,45 @@ def main():
     # resolveTokenURI(8)
 
     # Resolve ALL tokens should resolve rest
-    resolveAllTokensURIs()
+    # resolveAllTokensURIs()
 
     ## Retrieve metadata URI by tokenId()##
+    setTokenMapping(4)  # Must be larger, starts from last...
+
+    print("Mapped URI: {}".format(getMappedURI(2)))
+    print("Token URI: {}".format(getTokenURI(2)))
+    userMintHomies(1)
+
+
+# User mint, mints token and sets to previously mapped tokenURI
+def userMintHomies(total):
+    print("Working on " + network.show_active())
+    dev = accounts.add(config["wallets"]["from_key"])
+    digiHomie = DigiHomie[len(DigiHomie)-1]  # Get the most recent
+    transaction = digiHomie.userMintHomies(total, {"from": dev})
+
+
+##Retrieve metadata URI from mapping via tokenId##
+def setTokenMapping(total):
+    print("Working on " + network.show_active())
+    dev = accounts.add(config["wallets"]["from_key"])
+    digiHomie = DigiHomie[len(DigiHomie)-1]  # Get the most recent
+
+    iteration = digiHomie.mappedCounter()
+    while(iteration < total):
+        print("Iteration: " + str(iteration))
+        print("Token Counter: " + str(digiHomie.tokenCounter()))
+        print("Mapped Counter: " + str(digiHomie.mappedCounter()))
+
+        # Generate image, metadata and upload to IPFS
+        uri = generateHomies(iteration)
+        print("URI: {}".format(uri))
+        transaction = digiHomie.setTokenMapping(uri, {"from": dev})
+        print("Setting URI to {} ".format(uri))
+        transaction.wait(1)
+        iteration = iteration + 1
+        print("Token Counter: " + str(digiHomie.tokenCounter()))
+        print("Mapped Counter: " + str(digiHomie.mappedCounter()))
 
 
 def getTokenURI(tokenId):
@@ -53,11 +89,20 @@ def getMappedURI(tokenId):
 
 ##Retreive total tokens/homies deployed##
 def getTokenCount():
-    print("Working on " + network.show_active())
     digiHomie = DigiHomie[len(DigiHomie)-1]
     number_of_homies = digiHomie.tokenCounter()
     # print("The number of NFTs deployed: {}".format(number_of_homies))
     return number_of_homies
+
+
+##Retreive total tokens/homies deployed##
+def getMappedCount():
+    digiHomie = DigiHomie[len(DigiHomie)-1]
+    mapped = digiHomie.mappedCounter()
+    # print("The number of NFTs deployed: {}".format(number_of_homies))
+    return mapped
+
+# User mint will simply call mint
 
 
 ##Creates Homies - 'setURI' boolean determines URI##
@@ -81,12 +126,10 @@ def createHomies(total, setURI):
             transaction = digiHomie.mintHomie(
                 uri, {"from": dev})
             print("Setting URI to {} ".format(uri))
-        if(setURI == False):
+        else:
             transaction = digiHomie.mintHomiePending(
                 uri, {"from": dev})
             print("Setting URI to 'loading' {}".format(LOADINGURI))
-        else:
-            print("Please set 'setURI' boolean to 'True' or 'False'")
         transaction.wait(1)
         iteration = iteration+1
 
@@ -923,7 +966,7 @@ def generateHomiesAndFilesTEST(token_id, data):
     resized_img.save(folder + str(token_id) + '.png', "PNG")
 
     # Set image property of metadata
-    # data['image'] =
+    data['image'] = "ipfs://FOLDER"  # mint will set number to end of base URI
 
     # img0.show()
 
