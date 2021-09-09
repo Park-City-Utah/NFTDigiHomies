@@ -15,37 +15,73 @@ import os as os
 import json as json
 from pathlib import Path
 import requests
-import numpy as np
 
-LOADINGURI = "ipfs://Qme9i2UjhqA6evVSWZaCHgSF4AvgQzsb4mVUDwP971ZNfL"
 ASSETFOLDER = "../../Assets/"
+
+##################################################################################
+##  Final Steps:                                                                ##
+##  1 - CreatHomies(500, True) - Create 1-499 end to end, revealed              ##
+##  2 - CreateHomies(500, False) - Create 500-999 with 'PENDING' meta           ##
+##  3 - SetTokenMApping(500) - Create image/meta and MAP, for later MINTING     ##
+##  4 - UserMintHomies(1-10) - MINT and setTokenURI to MAPPED via tokenIdtoURI  ##
+##  5 - ResovleTokenURI(x) - Will 'reveal' minted 'PENDING' tokens              ##
+##  6 - ResolveAllTokenURIs() - Will 'reveal' ALL minted 'PENDING' tokens       ##
+##################################################################################
+
+# Loading uri "ipfs://Qme9i2UjhqA6evVSWZaCHgSF4AvgQzsb4mVUDwP971ZNfL"
 
 
 def main():
-    # Create tokens
-    createHomies(2, True)  # With URI
-    # createHomies(2, False)  # Without URI (mapped but not exposed)
-    # print("Total tokens is {}".format(getTokenCount()))
 
-    # Resolve mapped
-    # resolveTokenURI(5)
-    # resolveTokenURI(6)
+    # Test
+    # i = 0
+    # while(i < 500):
+    #     generateHomiesAndFilesTEST(i)
+    #     i = i + 1
+
+    # Create tokens, set TOTAL - number it will create up to, from current total
+    # createHomies(10, True)  # With URI
+
+    # Create tokens, set TOTAL - number it will create up to, from current total (5, must be < 5)
+    # createHomies(20, False)  # Without URI (mapped but not exposed)
+
+    # Will NOT mint, will create image/meta and store uri in contract mapping, for later userMint
+    # setTokenMapping(30)
+
+    #print("Total tokens is {}".format(getTokenCount()))
+
+    # Resolve mapped will set 'pending' URI to mapped (final) URI of meta w/ png and traits in tact
+    # WILL BE THE EXACT # (token) - resolveTokenURI(11) will expose the # 11 token
+    resolveTokenURI(10)
+    # resolveTokenURI(1)
     # resolveTokenURI(8)
 
-    # Resolve ALL tokens should resolve rest
+    # Resolve ALL tokens should resolve rest, will skip set
     # resolveAllTokensURIs()
 
+    # mappedURI = getMappedURI(3)
+    # print("Mapped URI is {}".format(mappedURI))
+    # tokenURI = getTokenURI(3)
+    # print("TokenURI is: {}".format(tokenURI))
+
     ## Retrieve metadata URI by tokenId()##
-    setTokenMapping(4)  # Must be larger, starts from last...
+    # setTokenMapping(8)  # Must be larger, starts from last...
 
-    print("Mapped URI: {}".format(getMappedURI(2)))
-    print("Token URI: {}".format(getTokenURI(2)))
-    userMintHomies(1)
+    #print("Mapped URI: {}".format(getMappedURI(22)))
+    #print("Token URI: {}".format(getTokenURI(22)))
+
+    # User can mint any mapped, but not created, up to total
+    # userMintHomies(2)
+
+    # Print token count & mapped count
+    digiHomie = DigiHomie[len(DigiHomie)-1]  # Get the most recent
+    print("Token Counter: " + str(digiHomie.tokenCounter()))
+    print("Mapped Counter: " + str(digiHomie.mappedCounter()))
 
 
-# User mint, mints token and sets to previously mapped tokenURI
 def userMintHomies(total):
     print("Working on " + network.show_active())
+    print("Minting {} tokens by resolving tokenURI to mappedURI in tokenIdToMapped()".format(total))
     dev = accounts.add(config["wallets"]["from_key"])
     digiHomie = DigiHomie[len(DigiHomie)-1]  # Get the most recent
     transaction = digiHomie.userMintHomies(total, {"from": dev})
@@ -129,7 +165,7 @@ def createHomies(total, setURI):
         else:
             transaction = digiHomie.mintHomiePending(
                 uri, {"from": dev})
-            print("Setting URI to 'loading' {}".format(LOADINGURI))
+            print("Setting URI to 'loading' URI")
         transaction.wait(1)
         iteration = iteration+1
 
@@ -211,17 +247,17 @@ def generateHomies(token_id):
     data = generate_meta_data(token_id)
 
     body = generateRandomNumber(1, 6)
-    eyes = generateRandomNumber(1, 5)
+    eyes = generateRandomNumber(1, 8)
     mouth = generateRandomNumber(1, 7)
     # OPTIONAL - higher range equals increase randomness, less likely to align with exisiting feature
     hair = generateRandomNumber(0, 8)
     facialHair = generateRandomNumber(0, 10)
-    jewelry = generateRandomNumber(0, 9)
-    smoke = generateRandomNumber(0, 8)
+    jewelry = generateRandomNumber(0, 10)
+    smoke = generateRandomNumber(0, 15)
     hat = generateRandomNumber(0, 15)
     glasses = generateRandomNumber(0, 10)
-    mask = generateRandomNumber(0, 35)
-    special = generateRandomNumber(0, 150)
+    mask = generateRandomNumber(0, 15)
+    special = generateRandomNumber(0, 220)
 
     # Feature map
     bodyMap = createBodyMap()
@@ -279,7 +315,7 @@ def generateHomies(token_id):
     else:
         special = 0
 
-        # Open Required pngs
+        # Open Required pngs (Body, Eyes, Mouth)
         img0 = Image.open(ASSETFOLDER + "Body/" + str(body) + ".png")
         data['attributes'].append(
             {
@@ -298,8 +334,10 @@ def generateHomies(token_id):
                 'trait_type': 'Eyes',
                 'value': eyeMap[eyes]
             })
-        if(eyes == 5):
+        if(eyes == 7):
             Swag = Swag + 20
+        if(eyes == 8):
+            Swag = Swag + 25
         img0.paste(img2, (0, 0), img2)
         data['attributes'].append(
             {
@@ -309,7 +347,7 @@ def generateHomies(token_id):
         if(mouth == 7):
             Swag = Swag + 10
         # Open AND Paste Optional PNGs
-        if(0 < hair <= 8):
+        if(0 < hair < 9):
             img3 = Image.open(ASSETFOLDER + "Hair/" + str(hair) + ".png")
             img0.paste(img3, (0, 0), img3)
             data['attributes'].append(
@@ -346,7 +384,7 @@ def generateHomies(token_id):
                 })
             if(jewelry >= 4):
                 Swag = Swag + 20
-            else:
+            if(jewelry < 4):
                 Swag = Swag + 10
         else:
             jewelry = 0
@@ -362,10 +400,31 @@ def generateHomies(token_id):
                         'value': maskMap[mask]
                     })
             if(mask == 5):
+                img9 = Image.open(ASSETFOLDER + "Mask/" + str(mask) + ".png")
+                img0.paste(img9, (0, 0), img9)
+                data['attributes'].append(
+                    {
+                        'trait_type': 'Mask',
+                        'value': maskMap[mask]
+                    })
                 Swag = Swag + 45
             if(2 < mask < 5):
+                img9 = Image.open(ASSETFOLDER + "Mask/" + str(mask) + ".png")
+                img0.paste(img9, (0, 0), img9)
+                data['attributes'].append(
+                    {
+                        'trait_type': 'Mask',
+                        'value': maskMap[mask]
+                    })
                 Swag = Swag + 35
             if(mask <= 2):
+                img9 = Image.open(ASSETFOLDER + "Mask/" + str(mask) + ".png")
+                img0.paste(img9, (0, 0), img9)
+                data['attributes'].append(
+                    {
+                        'trait_type': 'Mask',
+                        'value': maskMap[mask]
+                    })
                 Swag = Swag + 20
         else:
             if((0 < hat <= 4) and (hair != 6)):
@@ -409,6 +468,9 @@ def generateHomies(token_id):
             else:
                 glasses = 0
             mask = 0        # img0.show()
+
+    if(Swag > 100):
+        Swag = 100
     data['attributes'].append(
         {
             'display_type': 'boost_number',
@@ -466,9 +528,11 @@ def upload_to_ipfs(filepath, name):
         uriForOS = "ipfs://{}".format(ipfs_hash)
         print("URI " + uriForOS)
 
+        # NOTE Commented out, pin queue is async
         # ipfs_pin_command = "ipfs pin remote add --service=Pinata {}".format(ipfs_hash)
-        # pin_response = requests.post(
-        # ipfs_url + "/api/v0/pin/remote/add?arg={}&name={}&service=Pinata".format(ipfs_hash, name))
+        # pin_response =
+        requests.post(
+            ipfs_url + "/api/v0/pin/remote/add?arg={}&name={}&service=Pinata".format(ipfs_hash, name))
         # print(pin_response)
         return uriForOS
     return None
@@ -489,10 +553,13 @@ def createBodyMap():
 def createEyeMap():
     eyeMap = {
         1: 'Normal',
-        2: 'Peep',
+        2: 'Normal',
         3: 'Squint',
-        4: 'Peer',
-        5: 'Gold',
+        4: 'Squint',
+        5: 'Peer',
+        6: 'Peep',
+        7: 'Gold',
+        8: 'Diamond'
     }
     return eyeMap
 
@@ -528,8 +595,8 @@ def createFacialHairMap():
     facialHairMap = {
         1: 'Light',
         2: 'Stuble',
-        3: 'Handle-Bar Beard',
-        4: 'Light Handle-Bar Beard',
+        3: 'Handle-Bar',
+        4: 'Light Handle-Bar',
         5: 'Grey Beard',
         6: 'Moustache',
         7: 'Handle-Bar'
@@ -572,8 +639,8 @@ def createGlassesMap():
     glassesMap = {
         1: 'Carerra',
         2: 'Miami',
-        3: 'Dahmer',
-        4: 'Dahmer - Dark',
+        3: 'Dahmers',
+        4: 'Dark Dahmers',
         5: 'Pink Stunners',
         6: 'Patch'
     }
@@ -599,168 +666,22 @@ def createSpecialMap():
     return specialMap
 
 
-def get_body(body_number):
-    switch = {
-        0: 'Thin Light',
-        1: 'Thin Mid',
-        2: 'Thin Dark',
-        3: 'Thick Light',
-        4: 'Thick Mid',
-        5: 'Thick Dark'
-    }
-    print(body_number)
-    print(switch[body_number])
-    return switch[body_number]
+def generateHomiesAndFilesTEST(token_id):
+    # Generate metat data template
+    data = generate_meta_data(token_id)
 
-
-def get_eyes(eye_number):
-    switch = {
-        0: 'Normal',
-        1: 'Peep',
-        2: 'Squint',
-        3: 'Peer',
-        4: 'Gold',
-    }
-    print(eye_number)
-    print(switch[eye_number])
-    return switch[eye_number]
-
-
-def get_mouth(mouth_number):
-    switch = {
-        0: 'Normal',
-        1: 'Grin',
-        2: 'Smile',
-        3: 'Ohh',
-        4: 'Lips',
-        5: 'Missing Tooth',
-        6: 'Gold Tooth'
-    }
-    print(mouth_number)
-    print(switch[mouth_number])
-    return switch[mouth_number]
-
-# Optional random generation to include 0 'get_<feature>'
-
-
-def get_hair(hair_number):
-    switch = {
-        1: 'Black',
-        2: 'Brown',
-        3: 'Gray',
-        4: 'Pink',
-        5: 'Comb-Over',
-        6: 'Man-Bun',
-        7: 'Corn-Rows',
-        8: 'Mullet'
-    }
-    print(hair_number)
-    print(switch[hair_number])
-    return switch[hair_number]
-
-
-def get_facialHair(facialHair_number):
-    switch = {
-        1: 'Light',
-        2: 'Stuble',
-        3: 'Handle-Bar Beard',
-        4: 'Light Handle-Bar Beard',
-        5: 'Grey Beard',
-        6: 'Moustache',
-        7: 'Handle-Bar'
-    }
-    print(facialHair_number)
-    print(switch[facialHair_number])
-    return switch[facialHair_number]
-
-
-def get_jewelry(jewelry_number):
-    switch = {
-        1: 'Gold Chain',
-        2: 'Gold Chain & Earring',
-        3: 'Diamond Chain',
-        4: 'Diamond Chain, Earring & Nose Ring',
-        5: 'XL Gold Chain & Diamond Earring'
-    }
-    print(jewelry_number)
-    print(switch[jewelry_number])
-    return switch[jewelry_number]
-
-
-def get_smoke(smoke_number):
-    switch = {
-        1: 'Cigarette',
-        2: 'Joint Sativa',
-        3: 'Jeferey',
-        4: 'Joint Indica'
-    }
-    print(smoke_number)
-    print(switch[smoke_number])
-    return switch[smoke_number]
-
-
-def get_hat(hat_number):
-    switch = {
-        1: 'Bonzai',
-        2: 'Backwards Cap',
-        3: 'DuRag',
-        4: 'Crown'
-    }
-    print(hat_number)
-    print(switch[hat_number])
-    return switch[hat_number]
-
-
-def get_glasses(glasses_number):
-    switch = {
-        1: 'Carerra',
-        2: 'Miami',
-        3: 'Dahmer',
-        4: 'Dahmer - Dark',
-        5: 'Pink Stunners',
-        6: 'Patch'
-    }
-    print(glasses_number)
-    print(switch[glasses_number])
-    return switch[glasses_number]
-
-
-def get_mask(mask_number):
-    switch = {
-        1: 'Balaklava',
-        2: 'Ninja',
-        3: 'Doom',
-        4: 'Doom 2',
-        5: 'Jason'
-    }
-    print(mask_number)
-    print(switch[mask_number])
-    return switch[mask_number]
-
-
-def get_special(special_number):
-    switch = {
-        1: 'Alien',
-        2: 'Death'
-    }
-    print(special_number)
-    print(switch[special_number])
-    return switch[special_number]
-
-
-def generateHomiesAndFilesTEST(token_id, data):
     body = generateRandomNumber(1, 6)
-    eyes = generateRandomNumber(1, 5)
+    eyes = ((generateRandomNumber(1, 100000) % 8) + 1)
     mouth = generateRandomNumber(1, 7)
     # OPTIONAL - higher range equals increase randomness, less likely to align with exisiting feature
-    hair = generateRandomNumber(0, 8)
+    hair = ((generateRandomNumber(0, 100000) % 8) + 1)
     facialHair = generateRandomNumber(0, 10)
     jewelry = generateRandomNumber(0, 9)
-    smoke = generateRandomNumber(0, 8)
+    smoke = generateRandomNumber(0, 15)
     hat = generateRandomNumber(0, 15)
     glasses = generateRandomNumber(0, 10)
-    mask = generateRandomNumber(0, 35)
-    special = generateRandomNumber(0, 150)
+    mask = generateRandomNumber(0, 15)
+    special = generateRandomNumber(0, 200)
 
     # Feature map
     bodyMap = createBodyMap()
@@ -818,7 +739,7 @@ def generateHomiesAndFilesTEST(token_id, data):
     else:
         special = 0
 
-        # Open Required pngs
+        # Open Required pngs (Body, Eyes, Mouth)
         img0 = Image.open(ASSETFOLDER + "Body/" + str(body) + ".png")
         data['attributes'].append(
             {
@@ -837,8 +758,11 @@ def generateHomiesAndFilesTEST(token_id, data):
                 'trait_type': 'Eyes',
                 'value': eyeMap[eyes]
             })
-        if(eyes == 5):
+        if(eyes == 7):
             Swag = Swag + 20
+        if(eyes == 8):
+            Swag = Swag + 25
+            print("Diamond Eyes")
         img0.paste(img2, (0, 0), img2)
         data['attributes'].append(
             {
@@ -848,7 +772,7 @@ def generateHomiesAndFilesTEST(token_id, data):
         if(mouth == 7):
             Swag = Swag + 10
         # Open AND Paste Optional PNGs
-        if(0 < hair <= 8):
+        if(0 < hair < 9):
             img3 = Image.open(ASSETFOLDER + "Hair/" + str(hair) + ".png")
             img0.paste(img3, (0, 0), img3)
             data['attributes'].append(
@@ -859,6 +783,7 @@ def generateHomiesAndFilesTEST(token_id, data):
             if(3 < hair <= 6):
                 Swag = Swag + 10
             if(hair >= 7):
+                print("Possible Mullet")
                 Swag = Swag + 15
         if(0 < facialHair <= 7):
             img4 = Image.open(ASSETFOLDER + "FacialHair/" +
@@ -901,10 +826,31 @@ def generateHomiesAndFilesTEST(token_id, data):
                         'value': maskMap[mask]
                     })
             if(mask == 5):
+                img9 = Image.open(ASSETFOLDER + "Mask/" + str(mask) + ".png")
+                img0.paste(img9, (0, 0), img9)
+                data['attributes'].append(
+                    {
+                        'trait_type': 'Mask',
+                        'value': maskMap[mask]
+                    })
                 Swag = Swag + 45
             if(2 < mask < 5):
+                img9 = Image.open(ASSETFOLDER + "Mask/" + str(mask) + ".png")
+                img0.paste(img9, (0, 0), img9)
+                data['attributes'].append(
+                    {
+                        'trait_type': 'Mask',
+                        'value': maskMap[mask]
+                    })
                 Swag = Swag + 35
             if(mask <= 2):
+                img9 = Image.open(ASSETFOLDER + "Mask/" + str(mask) + ".png")
+                img0.paste(img9, (0, 0), img9)
+                data['attributes'].append(
+                    {
+                        'trait_type': 'Mask',
+                        'value': maskMap[mask]
+                    })
                 Swag = Swag + 20
         else:
             if((0 < hat <= 4) and (hair != 6)):

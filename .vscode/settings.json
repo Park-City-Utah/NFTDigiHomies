@@ -1,3 +1,5 @@
 {
-  "git.ignoreLimitWarning": true
+  "git.ignoreLimitWarning": true,
+  "solidity.defaultCompiler": "localFile",
+  "solidity.compileUsingLocalVersion": "/Users/parkerferguson/Workspace/NFT/soljson-v0.6.6+commit.6c089d02.js"
 }
