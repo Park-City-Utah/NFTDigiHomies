@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract DigiHomie is ERC721, Ownable, AccessControl {
-    uint256 public MAX_TOKENS = 5;
+    uint256 public MAX_TOKENS = 5000;
     uint256 public tokenCounter;
     uint256 public mappedCounter;
     string public LOADINGURI;
