@@ -43,12 +43,12 @@ def main():
     createHomies(20, True)  # With URI
 
     # Create tokens, set TOTAL - number it will create up to, from current total (5, must be < 5)
-    createHomies(25, False)  # Without URI (mapped but not exposed)
+    createHomies(30, False)  # Without URI (mapped but not exposed)
 
     # Will NOT mint, will create image/meta and store uri in contract mapping, for later userMint
-    setTokenMapping(35)
+    setTokenMapping(50)
 
-    print("Total tokens is {}".format(getTokenCount()))
+    #print("Total tokens is {}".format(getTokenCount()))
 
     # Resolve mapped will set 'pending' URI to mapped (final) URI of meta w/ png and traits in tact
     # WILL BE THE EXACT # (token) - resolveTokenURI(11) will expose the # 11 token
@@ -71,7 +71,7 @@ def main():
     #print("Token URI: {}".format(getTokenURI(22)))
 
     # User can mint any mapped, but not created, up to total
-    # userMintHomies(2)
+    # userMintHomies(5)
 
     # Print token count & mapped count
     digiHomie = DigiHomie[len(DigiHomie)-1]  # Get the most recent
@@ -159,11 +159,11 @@ def createHomies(total, setURI):
         print("URI: {}".format(uri))
 
         if(setURI == True):
-            transaction = digiHomie.mintHomie(
+            transaction = digiHomie.adminMintHomie(
                 uri, {"from": dev})
             print("Setting URI to {} ".format(uri))
         else:
-            transaction = digiHomie.mintHomiePending(
+            transaction = digiHomie.adminMintHomiePending(
                 uri, {"from": dev})
             print("Setting URI to 'loading' URI")
         transaction.wait(1)
@@ -256,8 +256,8 @@ def generateHomies(token_id):
     smoke = generateRandomNumber(0, 15)
     hat = generateRandomNumber(0, 15)
     glasses = generateRandomNumber(0, 10)
-    mask = generateRandomNumber(0, 15)
-    special = generateRandomNumber(0, 220)
+    mask = generateRandomNumber(0, 25)
+    special = generateRandomNumber(0, 200)
 
     # Feature map
     bodyMap = createBodyMap()

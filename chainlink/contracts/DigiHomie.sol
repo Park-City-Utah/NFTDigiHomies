@@ -27,7 +27,7 @@ contract DigiHomie is ERC721, Ownable, AccessControl {
     }
 
     //Creates contract for each homie & sets URI to resolve Homie
-    function mintHomie(string memory tokenURI)
+    function adminMintHomie(string memory tokenURI)
         public
         onlyOwner
         returns (bytes32)
@@ -46,7 +46,7 @@ contract DigiHomie is ERC721, Ownable, AccessControl {
     }
 
     //Creates token
-    function mintHomiePending(string memory tokenURI)
+    function adminMintHomiePending(string memory tokenURI)
         public
         onlyOwner
         returns (bytes32)
@@ -77,7 +77,7 @@ contract DigiHomie is ERC721, Ownable, AccessControl {
     //User enabled 'mint' creates token & maps previously assigned tokenIdToURI mapping
     function userMintHomies(uint256 numTokens) public {
         require(
-            SafeMath.add(tokenCounter, numTokens) < MAX_TOKENS,
+            (tokenCounter + numTokens) < MAX_TOKENS,
             "Exceeds maximum token supply."
         );
         require(
