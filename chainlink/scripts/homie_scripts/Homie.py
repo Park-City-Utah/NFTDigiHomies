@@ -4,11 +4,8 @@ from brownie import (
     DigiHomie,
     accounts,
     config,
-    Contract,
 )
-from scripts.helpful_scripts import *
 from metadata import sample_metadata
-from web3 import Web3
 from PIL import Image
 import numpy as np
 import os as os
@@ -19,18 +16,13 @@ import requests
 ASSETFOLDER = "../../Assets/"
 LOADINGURI = "ipfs://Qme9i2UjhqA6evVSWZaCHgSF4AvgQzsb4mVUDwP971ZNfL"
 TOTAL = 5
-setURI = True
 
 #############################################################################
 ##  Homie Class - Generation of Homie NFT object includes random asset     ##
-# assignment and generation of PNG/Metat data
+# assignment and generation of PNG/Metadata
 #############################################################################
 
 
-##Creates Homies - 'setURI' boolean determines URI##
-##URI = FALSE - Set URI to 'loading' and meta to 'TBD'##
-##URI = FALSE - Set IPFS URI in mapping for later resolution##
-##URI = TRUE - Set URI & mapping to IPFS URI##
 def main():
     print("Working on " + network.show_active())
     dev = accounts.add(config["wallets"]["from_key"])
@@ -42,22 +34,23 @@ def main():
         print("Token Counter: " + str(digiHomie.tokenCounter()))
 
         # Generate homie object (image, metadata)
-        myHomie = Homie()
+        myHomie = Homie(iteration)
+        path = myHomie.path
 
-        metaPath = "{}.json".format(myHomie.path)
+        metaPath = "{}.json".format(path)
         metaName = "{}.json".format(iteration)
 
-        imagePath = "{}.png".format(myHomie.path)
+        imagePath = "{}.png".format(path)
         imageName = "{}.png".format(iteration)
 
         print("MetaDataPath: {}".format(metaPath))
-        print("MetaName: {}".format(metaName))
+        print("MetaDataName: {}".format(metaName))
         print("ImageDataPath: {}".format(imagePath))
         print("ImageName: {}".format(imageName))
 
         ##IFF upload to IPFS requested##
         image_to_upload = None
-        meta_to_upload = None
+        # meta_to_upload = None
         if os.getenv("UPLOAD_IPFS") == "true":
 
             # Upload and return IPFS image uri
@@ -83,18 +76,13 @@ def main():
         iteration = iteration+1
 
 
-class Homie():
-    tokenCounter = 0
-    path = ''
+class Homie:
+    def __init__(self, itr):
+        self.id = itr
+        self.data = self.generate_meta_data(itr)
+        self.path = self.generate_homie(itr)
 
-    def _init_(self):
-        Homie.tokenCounter += 1
-        self.id = Homie.tokenCounter
-        self.data = generate_meta_data(self.id)
-        self.path = generateHomies(self.id)
-
-    @classmethod
-    def generate_meta_data(token_id):
+    def generate_meta_data(self, token_id):
         homie_metadata = sample_metadata.metadata_template
         homie_metadata["name"] = str(token_id)
         homie_metadata["description"] = 'An Eternal Ethereum Digital Homie!'
@@ -104,8 +92,7 @@ class Homie():
         homie_metadata["attributes"] = []
         return homie_metadata
 
-    @classmethod
-    def generate_homie(token_id):
+    def generate_homie(self, token_id):
         body = generateRandomNumber(1, 6)
         eyes = generateRandomNumber(1, 8)
         mouth = generateRandomNumber(1, 7)
@@ -137,7 +124,7 @@ class Homie():
         # Special characteristic - Allow smoke & jewelry only
         if(0 < special <= 2):
             img0 = Image.open(ASSETFOLDER + "Special/" + str(special) + ".png")
-            Homie.data['attributes'].append(
+            self.data['attributes'].append(
                 {
                     'trait_type': 'Special',
                     'value': specialDict[special]
@@ -147,7 +134,7 @@ class Homie():
             if(0 < smoke <= 4):
                 img6 = Image.open(ASSETFOLDER + "Smoke/" + str(smoke) + ".png")
                 img0.paste(img6, (0, 0), img6)
-                Homie.data['attributes'].append(
+                self.data['attributes'].append(
                     {
                         'trait_type': 'Smoke',
                         'value': smokeDict[smoke]
@@ -160,7 +147,7 @@ class Homie():
                 img5 = Image.open(ASSETFOLDER + "Jewelry/" +
                                   str(jewelry) + ".png")
                 img0.paste(img5, (0, 0), img5)
-                Homie.data['attributes'].append(
+                self.data['attributes'].append(
                     {
                         'trait_type': 'Jewelry',
                         'value': jewelryDict[jewelry]
@@ -175,7 +162,7 @@ class Homie():
 
             # Open Required pngs (Body, Eyes, Mouth)
             img0 = Image.open(ASSETFOLDER + "Body/" + str(body) + ".png")
-            Homie.data['attributes'].append(
+            self.data['attributes'].append(
                 {
                     'trait_type': 'Body',
                     'value': bodyDict[body]
@@ -187,7 +174,7 @@ class Homie():
 
             # Paste Required PNGs
             img0.paste(img1, (0, 0), img1)
-            Homie.data['attributes'].append(
+            self.data['attributes'].append(
                 {
                     'trait_type': 'Eyes',
                     'value': eyeDict[eyes]
@@ -197,7 +184,7 @@ class Homie():
             if(eyes == 8):
                 Swag = Swag + 25
             img0.paste(img2, (0, 0), img2)
-            Homie.data['attributes'].append(
+            self.data['attributes'].append(
                 {
                     'trait_type': 'Mouth',
                     'value': mouthDict[mouth]
@@ -208,7 +195,7 @@ class Homie():
             if(0 < hair < 9):
                 img3 = Image.open(ASSETFOLDER + "Hair/" + str(hair) + ".png")
                 img0.paste(img3, (0, 0), img3)
-                Homie.data['attributes'].append(
+                self.data['attributes'].append(
                     {
                         'trait_type': 'Hair',
                         'value': hairDict[hair]
@@ -221,7 +208,7 @@ class Homie():
                 img4 = Image.open(ASSETFOLDER + "FacialHair/" +
                                   str(facialHair) + ".png")
                 img0.paste(img4, (0, 0), img4)
-                Homie.data['attributes'].append(
+                self.data['attributes'].append(
                     {
                         'trait_type': 'Facial Hair',
                         'value': facialHairDict[facialHair]
@@ -236,7 +223,7 @@ class Homie():
                 img5 = Image.open(ASSETFOLDER + "Jewelry/" +
                                   str(jewelry) + ".png")
                 img0.paste(img5, (0, 0), img5)
-                Homie.data['attributes'].append(
+                self.data['attributes'].append(
                     {
                         'trait_type': 'Jewelry',
                         'value': jewelryDict[jewelry]
@@ -254,7 +241,7 @@ class Homie():
                     img9 = Image.open(
                         ASSETFOLDER + "Mask/" + str(mask) + ".png")
                     img0.paste(img9, (0, 0), img9)
-                    Homie.data['attributes'].append(
+                    self.data['attributes'].append(
                         {
                             'trait_type': 'Mask',
                             'value': maskDict[mask]
@@ -263,7 +250,7 @@ class Homie():
                     img9 = Image.open(
                         ASSETFOLDER + "Mask/" + str(mask) + ".png")
                     img0.paste(img9, (0, 0), img9)
-                    Homie.data['attributes'].append(
+                    self.data['attributes'].append(
                         {
                             'trait_type': 'Mask',
                             'value': maskDict[mask]
@@ -273,7 +260,7 @@ class Homie():
                     img9 = Image.open(
                         ASSETFOLDER + "Mask/" + str(mask) + ".png")
                     img0.paste(img9, (0, 0), img9)
-                    Homie.data['attributes'].append(
+                    self.data['attributes'].append(
                         {
                             'trait_type': 'Mask',
                             'value': maskDict[mask]
@@ -283,7 +270,7 @@ class Homie():
                     img9 = Image.open(
                         ASSETFOLDER + "Mask/" + str(mask) + ".png")
                     img0.paste(img9, (0, 0), img9)
-                    Homie.data['attributes'].append(
+                    self.data['attributes'].append(
                         {
                             'trait_type': 'Mask',
                             'value': maskDict[mask]
@@ -293,7 +280,7 @@ class Homie():
                 if((0 < hat <= 4) and (hair != 6)):
                     img7 = Image.open(ASSETFOLDER + "Hat/" + str(hat) + ".png")
                     img0.paste(img7, (0, 0), img7)
-                    Homie.data['attributes'].append(
+                    self.data['attributes'].append(
                         {
                             'trait_type': 'Hat',
                             'value': hatDict[hat]
@@ -308,7 +295,7 @@ class Homie():
                     img6 = Image.open(
                         ASSETFOLDER + "Smoke/" + str(smoke) + ".png")
                     img0.paste(img6, (0, 0), img6)
-                    Homie.data['attributes'].append(
+                    self.data['attributes'].append(
                         {
                             'trait_type': 'Smoke',
                             'value': smokeDict[smoke]
@@ -320,7 +307,7 @@ class Homie():
                     img8 = Image.open(ASSETFOLDER + "Glasses/" +
                                       str(glasses) + ".png")
                     img0.paste(img8, (0, 0), img8)
-                    Homie.data['attributes'].append(
+                    self.data['attributes'].append(
                         {
                             'trait_type': 'Glasses',
                             'value': glassesDict[glasses]
@@ -335,14 +322,14 @@ class Homie():
 
         if(Swag > 100):
             Swag = 100
-        Homie.data['attributes'].append(
+        self.data['attributes'].append(
             {
                 'display_type': 'boost_number',
                 'trait_type': 'Swag',
                 'value': Swag
             })
 
-        # Create and save Homie.data
+        # Create and save
         folder = ASSETFOLDER + "Homies/{}/".format(str(token_id))
         if not os.path.isdir(folder):
             os.mkdir(folder)
