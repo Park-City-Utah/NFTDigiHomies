@@ -16,6 +16,7 @@ import requests
 ASSETFOLDER = "../../Assets/"
 LOADINGURI = "ipfs://Qme9i2UjhqA6evVSWZaCHgSF4AvgQzsb4mVUDwP971ZNfL"
 TOTAL = 5
+setURI = True
 
 #############################################################################
 ##  Homie Class - Generation of Homie NFT object includes random asset     ##
