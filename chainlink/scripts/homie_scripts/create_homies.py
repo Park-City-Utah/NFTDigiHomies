@@ -34,19 +34,19 @@ ASSETFOLDER = "../../Assets/"
 def main():
 
     # Test
-    # i = 0
-    # while(i < 500):
-    #     generateHomiesAndFilesTEST(i)
-    #     i = i + 1
+    i = 0
+    while(i < 5000):
+        generateHomiesAndFilesTEST(i)
+        i = i + 1
 
     # Create tokens, set TOTAL - number it will create up to, from current total
-    createHomies(20, True)  # With URI
+    # createHomies(20, True)  # With URI
 
     # Create tokens, set TOTAL - number it will create up to, from current total (5, must be < 5)
-    createHomies(30, False)  # Without URI (mapped but not exposed)
+    # createHomies(30, False)  # Without URI (mapped but not exposed)
 
     # Will NOT mint, will create image/meta and store uri in contract mapping, for later userMint
-    setTokenMapping(50)
+    # setTokenMapping(50)
 
     #print("Total tokens is {}".format(getTokenCount()))
 
@@ -74,9 +74,9 @@ def main():
     # userMintHomies(5)
 
     # Print token count & mapped count
-    digiHomie = DigiHomie[len(DigiHomie)-1]  # Get the most recent
-    print("Token Counter: " + str(digiHomie.tokenCounter()))
-    print("Mapped Counter: " + str(digiHomie.mappedCounter()))
+    # digiHomie = DigiHomie[len(DigiHomie)-1]  # Get the most recent
+    #print("Token Counter: " + str(digiHomie.tokenCounter()))
+    #print("Mapped Counter: " + str(digiHomie.mappedCounter()))
 
 
 def userMintHomies(total):
@@ -664,3 +664,258 @@ def createSpecialMap():
         2: 'Death'
     }
     return specialMap
+
+
+def generateHomiesAndFilesTEST(token_id):
+    # Generate metat data template
+    data = generate_meta_data(token_id)
+
+    body = generateRandomNumber(1, 6)
+    eyes = generateRandomNumber(1, 8)
+    mouth = generateRandomNumber(1, 7)
+    # OPTIONAL - higher range equals increase randomness, less likely to align with exisiting feature
+    hair = generateRandomNumber(0, 8)
+    facialHair = generateRandomNumber(0, 10)
+    jewelry = generateRandomNumber(0, 10)
+    smoke = generateRandomNumber(0, 15)
+    hat = generateRandomNumber(0, 15)
+    glasses = generateRandomNumber(0, 10)
+    mask = generateRandomNumber(0, 25)
+    special = generateRandomNumber(0, 200)
+
+    # Feature map
+    bodyMap = createBodyMap()
+    eyeMap = createEyeMap()
+    mouthMap = createMouthMap()
+    hairMap = createHairMap()
+    facialHairMap = createFacialHairMap()
+    jewelryMap = createJewelryMap()
+    smokeMap = createSmokeMap()
+    hatMap = createHatMap()
+    glassesMap = createGlassesMap()
+    maskMap = createMaskMap()
+    specialMap = createSpecialMap()
+
+    # Create data object for json file creation
+    # data = createDataMap(i)
+
+    Swag = 0
+
+    # Special characteristic - Allow smoke & jewelry only
+    if(0 < special <= 2):
+        img0 = Image.open(ASSETFOLDER + "Special/" + str(special) + ".png")
+        data['attributes'].append(
+            {
+                'trait_type': 'Special',
+                'value': specialMap[special]
+            })
+        print('Special' + str(special))
+        Swag = Swag + 70
+        if(0 < smoke <= 4):
+            img6 = Image.open(ASSETFOLDER + "Smoke/" + str(smoke) + ".png")
+            img0.paste(img6, (0, 0), img6)
+            data['attributes'].append(
+                {
+                    'trait_type': 'Smoke',
+                    'value': smokeMap[smoke]
+                })
+            Swag = Swag + 10
+        else:
+            smoke = 0
+
+        if(0 < jewelry <= 5):
+            img5 = Image.open(ASSETFOLDER + "Jewelry/" + str(jewelry) + ".png")
+            img0.paste(img5, (0, 0), img5)
+            data['attributes'].append(
+                {
+                    'trait_type': 'Jewelry',
+                    'value': jewelryMap[jewelry]
+                })
+            if(jewelry >= 4):
+                Swag = Swag + 20
+            else:
+                Swag = Swag + 10
+        # img0.show()
+    else:
+        special = 0
+
+        # Open Required pngs (Body, Eyes, Mouth)
+        img0 = Image.open(ASSETFOLDER + "Body/" + str(body) + ".png")
+        data['attributes'].append(
+            {
+                'trait_type': 'Body',
+                'value': bodyMap[body]
+            })
+        if(body > 3):
+            Swag = Swag + 15
+        img1 = Image.open(ASSETFOLDER + "Eyes/" + str(eyes) + ".png")
+        img2 = Image.open(ASSETFOLDER + "Mouth/" + str(mouth) + ".png")
+
+        # Paste Required PNGs
+        img0.paste(img1, (0, 0), img1)
+        data['attributes'].append(
+            {
+                'trait_type': 'Eyes',
+                'value': eyeMap[eyes]
+            })
+        if(eyes == 7):
+            Swag = Swag + 20
+        if(eyes == 8):
+            Swag = Swag + 25
+        img0.paste(img2, (0, 0), img2)
+        data['attributes'].append(
+            {
+                'trait_type': 'Mouth',
+                'value': mouthMap[mouth]
+            })
+        if(mouth == 7):
+            Swag = Swag + 10
+        # Open AND Paste Optional PNGs
+        if(0 < hair < 9):
+            img3 = Image.open(ASSETFOLDER + "Hair/" + str(hair) + ".png")
+            img0.paste(img3, (0, 0), img3)
+            data['attributes'].append(
+                {
+                    'trait_type': 'Hair',
+                    'value': hairMap[hair]
+                })
+            if(3 < hair <= 6):
+                Swag = Swag + 10
+            if(hair >= 7):
+                Swag = Swag + 15
+        if(0 < facialHair <= 7):
+            img4 = Image.open(ASSETFOLDER + "FacialHair/" +
+                              str(facialHair) + ".png")
+            img0.paste(img4, (0, 0), img4)
+            data['attributes'].append(
+                {
+                    'trait_type': 'Facial Hair',
+                    'value': facialHairMap[facialHair]
+                })
+            if(facialHair == 7):
+                Swag = Swag + 10
+            if(hair == 6):
+                Swag = Swag + 5
+        else:
+            facialHair = 0
+        if(0 < jewelry <= 5):
+            img5 = Image.open(ASSETFOLDER + "Jewelry/" + str(jewelry) + ".png")
+            img0.paste(img5, (0, 0), img5)
+            data['attributes'].append(
+                {
+                    'trait_type': 'Jewelry',
+                    'value': jewelryMap[jewelry]
+                })
+            if(jewelry >= 4):
+                Swag = Swag + 20
+            if(jewelry < 4):
+                Swag = Swag + 10
+        else:
+            jewelry = 0
+
+        # Mask - If mask, no smoke, hat or glasses added
+        if(0 < mask <= 5):
+            if(mask < 3 and hair != 6):
+                img9 = Image.open(ASSETFOLDER + "Mask/" + str(mask) + ".png")
+                img0.paste(img9, (0, 0), img9)
+                data['attributes'].append(
+                    {
+                        'trait_type': 'Mask',
+                        'value': maskMap[mask]
+                    })
+            if(mask == 5):
+                img9 = Image.open(ASSETFOLDER + "Mask/" + str(mask) + ".png")
+                img0.paste(img9, (0, 0), img9)
+                data['attributes'].append(
+                    {
+                        'trait_type': 'Mask',
+                        'value': maskMap[mask]
+                    })
+                Swag = Swag + 45
+            if(2 < mask < 5):
+                img9 = Image.open(ASSETFOLDER + "Mask/" + str(mask) + ".png")
+                img0.paste(img9, (0, 0), img9)
+                data['attributes'].append(
+                    {
+                        'trait_type': 'Mask',
+                        'value': maskMap[mask]
+                    })
+                Swag = Swag + 35
+            if(mask <= 2):
+                img9 = Image.open(ASSETFOLDER + "Mask/" + str(mask) + ".png")
+                img0.paste(img9, (0, 0), img9)
+                data['attributes'].append(
+                    {
+                        'trait_type': 'Mask',
+                        'value': maskMap[mask]
+                    })
+                Swag = Swag + 20
+        else:
+            if((0 < hat <= 4) and (hair != 6)):
+                img7 = Image.open(ASSETFOLDER + "Hat/" + str(hat) + ".png")
+                img0.paste(img7, (0, 0), img7)
+                data['attributes'].append(
+                    {
+                        'trait_type': 'Hat',
+                        'value': hatMap[hat]
+                    })
+                if(hat == 4):
+                    Swag = Swag + 20
+                else:
+                    Swag = Swag + 10
+            else:
+                hat = 0
+            if(0 < smoke <= 4):
+                img6 = Image.open(ASSETFOLDER + "Smoke/" + str(smoke) + ".png")
+                img0.paste(img6, (0, 0), img6)
+                data['attributes'].append(
+                    {
+                        'trait_type': 'Smoke',
+                        'value': smokeMap[smoke]
+                    })
+                Swag = Swag + 15
+            else:
+                smoke = 0
+            if(0 < glasses <= 6):
+                img8 = Image.open(ASSETFOLDER + "Glasses/" +
+                                  str(glasses) + ".png")
+                img0.paste(img8, (0, 0), img8)
+                data['attributes'].append(
+                    {
+                        'trait_type': 'Glasses',
+                        'value': glassesMap[glasses]
+                    })
+                if(glasses <= 3):
+                    Swag = Swag + 15
+                else:
+                    Swag = Swag = 5
+            else:
+                glasses = 0
+            mask = 0        # img0.show()
+
+    if(Swag > 100):
+        Swag = 100
+    data['attributes'].append(
+        {
+            'display_type': 'boost_number',
+            'trait_type': 'Swag',
+            'value': Swag
+        })
+    # print("Swag: {}".format(str(Swag)))
+
+    # Create and save data
+    folder = ASSETFOLDER + "Homies/{}/".format(str(token_id))
+    if not os.path.isdir(folder):
+        os.mkdir(folder)
+
+    resized_img = img0.resize((300, 300), resample=Image.NEAREST)
+    resized_img.save(folder + str(token_id) + '.png', "PNG")
+
+    image_path = folder + str(token_id) + '.png'
+
+    # Meta data upload to IPFS = returns meta
+    with open(folder + str(token_id) + '.json', 'w') as f:
+        json.dump(data, f)
+
+    # img0.show()
+    print("Gernation of NFT number {} complete.".format(token_id))
