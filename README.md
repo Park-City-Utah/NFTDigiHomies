@@ -1,5 +1,7 @@
 # NFTDigiHomies
 
+Donations are appreciated: 0x46ff5611679349eB517F511A73465F786e2EBDF8
+
 **This is a POC & test repo, you will find multiple ways to acheive simlar outcomes (OOP vs scripting).**
 
 Application to allow for creation and deployment of solidity smart contract. 
